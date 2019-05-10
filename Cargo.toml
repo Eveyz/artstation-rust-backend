@@ -1,0 +1,11 @@
+[package]
+name = "lighters-rust-server"
+version = "0.1.0"
+authors = ["Ningzhou Zeng <nxz84@case.edu>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "0.7"
+listenfd = "0.3"
+mongodb = "0.3.12"
+serde = { version = "1.0", features = ["derive"] }
