@@ -104,7 +104,10 @@ fn main() {
     let mut server = HttpServer::new(|| {
         App::new()
             .route("/", web::get().to(index))
-            .route("/reports", web::get().to(get_reports))  
+            .service(
+                web::scope("/reports")
+                .route("/", web::get().to(get_reports))
+            )
     });
 
     server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
