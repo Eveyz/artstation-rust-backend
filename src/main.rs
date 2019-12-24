@@ -3,14 +3,51 @@ extern crate listenfd;
 extern crate mongodb;
 extern crate serde_json;
 
+use log::info;
+
 use listenfd::ListenFd;
-use actix_web::{server, App, HttpRequest, HttpResponse, Json, Result, http::Method, Responder};
+use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 
-use mongodb::{Bson, Document};
-use mongodb::{Client, ThreadedClient};
-use mongodb::db::ThreadedDatabase;
-
+use lazy_static::lazy_static;
+use mongodb::{Client, Collection, options::{ClientOptions, FindOptions}};
+use bson::{doc, bson};
 use serde::{Serialize, Deserialize};
+
+mod common;
+
+fn init_logger() {
+    use chrono::Local;
+    use std::io::Write;
+
+    let env = env_logger::Env::default().filter_or(env_logger::DEFAULT_FILTER_ENV, "info");
+
+    env_logger::Builder::from_env(env)
+        .format(|buf, record| {
+            writeln!(
+                buf,
+                "{} {} [{}] {}",
+                Local::now().format("%Y-%m-%d %H:%M:%S"),
+                record.level(),
+                record.module_path().unwrap_or("<unnamed>"),
+                &record.args()
+            )
+        })
+        .init();
+    info!("env_logger initialized.");
+}
+
+lazy_static! {
+    pub static ref MONGO: Client = create_mongo_client();
+}
+
+fn create_mongo_client() -> Client {
+    Client::with_uri_str("mongodb://localhost:27017/").unwrap()
+}
+
+fn collection(coll_name: &str) -> Collection {
+    MONGO.database("lighters").collection(coll_name)
+}
+
 
 // mod models;
 
@@ -26,37 +63,57 @@ struct Report {
     situation: String,
 }
 
-fn index(req: &HttpRequest) -> Result<Json<User>> {
-    Ok(Json(User {email: "saiop147@gmail.com".to_string(), username: "admin".to_string()}))
+fn index() -> impl Responder {
+    // format!("Hello {}! id:{}", info.1, info.0)
+    "Hello from actix-web"
 }
 
-fn get_reports(req: &HttpRequest) -> HttpResponse {
-    let client = Client::connect("localhost", 27017)
-    .expect("Failed to initialize standalone client.");
-    let coll = client.db("lighters").collection("reports");
-    let cursor = coll.find(None, None).unwrap();
-    let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect();
-    let serialized = serde_json::to_string(&docs).unwrap();
+fn get_reports() -> HttpResponse {
+
+    let coll = collection("reports");
+    info!("coll name: {:?}", coll.name());
+    info!("coll namespace: {:?}", coll.namespace());
+
+    let rs = coll.count_documents(None, None);
+    info!("count = {}", rs.unwrap());
+
+    // let cursor = coll.find(Some(doc!{}), None).unwrap();
+    // let result = cursor.map(|doc| doc).collect();
+
+    // for result in cursor {
+    //     match result {
+    //         Ok(document) => {
+    //             println!("document: {:?}", document)
+    //         }
+    //         Err(e) => println!("err: {:?}", e),
+    //     }
+    // }
+
+
+    // let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect();
+    // let serialized = serde_json::to_string(&docs).unwrap();
     HttpResponse::Ok()
-                .body(serialized)
+                .body("serialized")
 }
 
 fn main() {
+
+    init_logger();
+
     let mut listenfd = ListenFd::from_env();
-    let mut server = server::new(|| {
+    let mut server = HttpServer::new(|| {
         App::new()
-            .prefix("/api")
-            .resource("/", |r| r.f(index))
-            .resource("/reports", |r| r.f(get_reports))  
+            .route("/", web::get().to(index))
+            .route("/reports", web::get().to(get_reports))  
     });
 
     server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
-        server.listen(l)
+        server.listen(l).unwrap()
     } else {
-        server.bind("127.0.0.1:8000").unwrap()
+        server.bind("127.0.0.1:8080").unwrap()
     };
-
-    server.run();
+    info!("server is listening on 8080");
+    server.run().unwrap();
 }
 
-// systemfd --no-pid -s http::3000 -- cargo watch -x run
+// systemfd --no-pid -s http::8080 -- cargo watch -x run
