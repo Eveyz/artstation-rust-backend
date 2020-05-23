@@ -2,18 +2,20 @@ extern crate actix_web;
 extern crate listenfd;
 extern crate mongodb;
 extern crate serde_json;
+extern crate dotenv;
+extern crate bcrypt;
 
 use log::info;
-
 use listenfd::ListenFd;
-use actix_web::{web, App, HttpServer, HttpResponse, Responder};
-
+use actix_web::{web, App, HttpServer};
 use lazy_static::lazy_static;
-use mongodb::{Client, Collection, options::{ClientOptions, FindOptions}};
-use bson::{doc, bson};
-use serde::{Serialize, Deserialize};
+use mongodb::{Client, Collection, options::{FindOptions}};
+use bson::{doc};
+use dotenv::dotenv;
 
 mod common;
+mod api;
+mod models;
 
 fn init_logger() {
     use chrono::Local;
@@ -41,82 +43,73 @@ lazy_static! {
 }
 
 fn create_mongo_client() -> Client {
-    Client::with_uri_str("mongodb://localhost:27017/").unwrap()
+    Client::with_uri_str("mongodb://localhost:27017").unwrap()
 }
 
 fn collection(coll_name: &str) -> Collection {
-    MONGO.database("lighters").collection(coll_name)
+    MONGO.database("lighters-rust").collection(coll_name)
 }
 
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    dotenv().ok();
 
-// mod models;
-
-#[derive(Serialize)]
-struct User {
-    email: String,
-    username: String,
-}
-
-#[derive(Serialize)]
-struct Report {
-    tutor_comment: String,
-    situation: String,
-}
-
-fn index() -> impl Responder {
-    // format!("Hello {}! id:{}", info.1, info.0)
-    "Hello from actix-web"
-}
-
-fn get_reports() -> HttpResponse {
-
-    let coll = collection("reports");
-    info!("coll name: {:?}", coll.name());
-    info!("coll namespace: {:?}", coll.namespace());
-
-    let rs = coll.count_documents(None, None);
-    info!("count = {}", rs.unwrap());
-
-    // let cursor = coll.find(Some(doc!{}), None).unwrap();
-    // let result = cursor.map(|doc| doc).collect();
-
-    // for result in cursor {
-    //     match result {
-    //         Ok(document) => {
-    //             println!("document: {:?}", document)
-    //         }
-    //         Err(e) => println!("err: {:?}", e),
-    //     }
-    // }
-
-
-    // let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect();
-    // let serialized = serde_json::to_string(&docs).unwrap();
-    HttpResponse::Ok()
-                .body("serialized")
-}
-
-fn main() {
+    // let HOST = dotenv::var("HOST").unwrap();
+    // let PORT = dotenv::var("PORT").unwrap();
+    let address = dotenv::var("ADDR").unwrap();
 
     init_logger();
 
     let mut listenfd = ListenFd::from_env();
     let mut server = HttpServer::new(|| {
         App::new()
-            .route("/", web::get().to(index))
+            // .route("/", web::get().to(greet))
+            .service(
+                web::scope("/users")
+                .route("/login", web::post().to(api::users::authenticate))
+                .route("/signup", web::post().to(api::users::create_user))
+            )
+            .service(
+                web::scope("/teachers")
+                .route("", web::get().to(api::teachers::get_teachers))
+                .route("/{_id}", web::get().to(api::teachers::get_teacher))
+            )
+            .service(
+                web::scope("/students")
+                .route("", web::get().to(api::students::get_students))
+            )
             .service(
                 web::scope("/reports")
-                .route("/", web::get().to(get_reports))
+                .route("", web::get().to(api::reports::get_reports))
+            )
+            .service(
+                web::scope("/transactions")
+                .route("", web::get().to(api::transactions::get_transactions))
+            )
+            .service(
+                web::scope("/tuitions")
+                .route("", web::get().to(api::tuitions::get_tuitions))
+            )
+            // .service(
+            //     web::scope("/levelsalaries")
+            //     .route("", web::get().to(greet))
+            // )
+            .service(
+                web::scope("/schedules")
+                .route("", web::get().to(api::schedules::get_schedules))
+                .route("/", web::post().to(api::schedules::create_schedule))
+                .route("/{_id}", web::get().to(api::schedules::get_schedule))
+                .route("/{_id}", web::delete().to(api::schedules::delete_schedule))
             )
     });
 
     server = if let Some(l) = listenfd.take_tcp_listener(0).unwrap() {
         server.listen(l).unwrap()
     } else {
-        server.bind("127.0.0.1:8080").unwrap()
+        server.bind(&address).unwrap()
     };
-    info!("server is listening on 8080");
-    server.run().unwrap();
+    info!("server is listening on {}", address);
+    return server.run().await;
 }
 
 // systemfd --no-pid -s http::8080 -- cargo watch -x run

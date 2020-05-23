@@ -24,9 +24,9 @@ impl error::ResponseError for BusinessError {
 		}
 	}
 
-	fn render_response(&self) -> HttpResponse {
-		self.error_response()
-	}
+	// fn render_response(&self) -> HttpResponse {
+	// 	self.error_response()
+	// }
 }
 
 #[derive(Serialize, Deserialize)]
