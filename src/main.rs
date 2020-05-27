@@ -8,10 +8,13 @@ extern crate bcrypt;
 use log::info;
 use listenfd::ListenFd;
 use actix_web::{web, App, HttpServer};
+use actix_web::http::{header::CONTENT_TYPE, HeaderValue};
+use actix_service::Service;
 use lazy_static::lazy_static;
 use mongodb::{Client, Collection, options::{FindOptions}};
 use bson::{doc};
 use dotenv::dotenv;
+// use futures::future::FutureExt;
 
 mod common;
 mod api;
@@ -65,7 +68,32 @@ async fn main() -> std::io::Result<()> {
         App::new()
             // .route("/", web::get().to(greet))
             .service(
+                web::scope("/admin")
+                .route("/create_teacher", web::post().to(api::admin::create_teacher))
+                .route("/create_student", web::post().to(api::admin::create_student))
+            )
+            .service(
                 web::scope("/users")
+                .wrap_fn(|req, srv| {
+                    info!("Hi this is from start. You requested {}", req.path());
+                    info!("Hi this is from start. You requested {:?}", req.headers());
+
+                    let headers = req.headers();
+                    let auth = headers.get("Authorization").unwrap();
+                    info!("token: {}", auth.to_str().unwrap());
+
+                    let fut = srv.call(req);
+                    println!("1");
+                    async {
+                        println!("2");
+                        let mut res = fut.await?;
+                    //     res.headers_mut().insert(
+                    //             CONTENT_TYPE, HeaderValue::from_static("application/json"),
+                    //     );
+                        println!("3");
+                        Ok(res)
+                    }
+                })
                 .route("/login", web::post().to(api::users::authenticate))
                 .route("/signup", web::post().to(api::users::create_user))
             )
@@ -81,6 +109,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/reports")
                 .route("", web::get().to(api::reports::get_reports))
+                .route("", web::post().to(api::reports::create_report))
+                .route("/{_id}", web::get().to(api::reports::get_report))
             )
             .service(
                 web::scope("/transactions")

@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use bson::{doc};
+use bson::{doc, UtcDateTime};
 use json::{object};
 use super::super::{collection};
 use log::info;
@@ -27,12 +27,6 @@ impl AuthUser {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserIdentityResponse {
-	pub token: String,
-  pub identity: Option<bson::ordered::OrderedDocument>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
 	#[serde(rename = "_id")]
 	pub _id: bson::oid::ObjectId,
@@ -47,6 +41,8 @@ pub struct User {
   pub temporaryPassword: String,
   pub password: String,
   pub passwordCon: String,
+  pub created_at: UtcDateTime,
+  pub updated_at: UtcDateTime,
 }
 
 impl User {

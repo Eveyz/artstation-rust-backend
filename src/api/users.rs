@@ -30,7 +30,7 @@ pub async fn authenticate(auth_user: web::Json<AuthUser>) -> impl Responder {
     Ok(result) => {
       match result {
         Some(_user) => {
-          info!("{:?}", _user);
+          // info!("{:?}", _user);
           let user: User = bson::from_bson(bson::Bson::Document(_user)).unwrap();
           let valid = verify(&auth_user.password, &user.password).unwrap();
           if valid {
@@ -62,7 +62,7 @@ pub async fn authenticate(auth_user: web::Json<AuthUser>) -> impl Responder {
       }
     },
     Err(err) => {
-      info!("failed to find user");
+      info!("failed to find user {}", err);
       res = r#"
         {
           "status": 400,
