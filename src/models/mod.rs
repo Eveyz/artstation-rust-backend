@@ -1,6 +1,6 @@
 pub mod user;
-pub mod schedule;
-pub mod report;
+pub mod project;
+pub mod asset;
 pub mod teacher;
 pub mod student;
 pub mod admin;

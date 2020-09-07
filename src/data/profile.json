@@ -1,0 +1,115 @@
+{
+  "followed": false,
+  "following_back": false,
+  "blocked": false,
+  "is_staff": false,
+  "is_plus_member": false,
+  "badges": [],
+  "collections_count": 0,
+  "has_pro_permissions": false,
+  "has_premium_permissions": false,
+  "portfolio_display_settings_albums": [
+    {
+      "id": 2550594,
+      "title": "All"
+    }
+  ],
+  "display_portfolio_as_albums": false,
+  "show_all_projects_album": true,
+  "albums_with_community_projects": [
+    {
+      "id": 2550594,
+      "title": "All",
+      "user_id": 2228426,
+      "created_at": "2020-08-23T20:00:37.622-05:00",
+      "updated_at": "2020-08-23T20:00:37.622-05:00",
+      "position": -1,
+      "community_projects_count": 0,
+      "total_projects": 0,
+      "website_projects_count": 0,
+      "public_projects_count": 0,
+      "profile_visibility": true,
+      "website_visibility": true,
+      "album_type": "all_projects"
+    }
+  ],
+  "profile_default_album": {
+    "id": 2550594,
+    "album_type": "all_projects"
+  },
+  "social_profiles": [],
+  "skills": [
+    {
+      "name": "Character Modeling"
+    },
+    {
+      "name": "Map Design"
+    }
+  ],
+  "software_items": [
+    {
+      "icon_url": "https://cdna.artstation.com/p/softwares/icons/000/000/044/default/unreal_logo_0.png?1471455994",
+      "name": "Unreal Engine"
+    }
+  ],
+  "experience_items": [],
+  "user_productions": [],
+  "portfolio": {
+    "summary_as_html": "<p>I am fluent with ProCreate</p>",
+    "resume_url": null,
+    "summary": "I am fluent with ProCreate",
+    "demo_reel_code": null,
+    "demo_reel_url": null
+  },
+  "portfolio_display_settings": {
+    "profile_default_album_id": 2550594,
+    "website_default_album_id": 2550594,
+    "display_portfolio_as_albums": false
+  },
+  "id": 2228426,
+  "large_avatar_url": "https://www.gravatar.com/avatar/c7f0c70e05d52f4e9f0a7e9c990ef1ba.jpg?size=240&d=https%3A%2F%2Fwww.artstation.com%2Fassets%2Fdefault_avatar.jpg",
+  "medium_avatar_url": "https://www.gravatar.com/avatar/c7f0c70e05d52f4e9f0a7e9c990ef1ba.jpg?size=240&d=https%3A%2F%2Fwww.artstation.com%2Fassets%2Fdefault_avatar.jpg",
+  "default_cover_url": "https://cdn.artstation.com/static_media/placeholders/user/cover/default.jpg",
+  "full_name": "Ningzhou Zeng",
+  "headline": "Freelance",
+  "username": "znz1990",
+  "artstation_url": "https://znz1990.artstation.com",
+  "artstation_website": "znz1990.artstation.com",
+  "followers_count": 0,
+  "followees_count": 0,
+  "liked_projects_count": 0,
+  "projects_count": 0,
+  "community_projects_count": 0,
+  "city": "Oxford",
+  "country": "United States of America",
+  "permalink": "https://www.artstation.com/znz1990",
+  "cover_file_name": null,
+  "cover_width": null,
+  "cover_height": null,
+  "availability": "available",
+  "available_full_time": true,
+  "available_contract": true,
+  "available_freelance": true,
+  "pro_member": false,
+  "profile_artstation_website": "znz1990.artstation.com",
+  "profile_artstation_website_url": "https://znz1990.artstation.com",
+  "first_name": "Ningzhou",
+  "last_name": "Zeng",
+  "memorialized": null,
+  "twitter_url": null,
+  "facebook_url": null,
+  "tumblr_url": null,
+  "deviantart_url": null,
+  "linkedin_url": null,
+  "instagram_url": null,
+  "pinterest_url": null,
+  "youtube_url": null,
+  "vimeo_url": null,
+  "behance_url": null,
+  "steam_url": null,
+  "sketchfab_url": null,
+  "twitch_url": null,
+  "imdb_url": null,
+  "website_url": null,
+  "public_email": null
+}

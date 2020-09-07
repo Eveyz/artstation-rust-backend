@@ -1,0 +1,56 @@
+{
+  "tags": [],
+  "album_ids": [],
+  "medium": {
+    "name": "Digital 2D",
+    "id": 1
+  },
+  "mediums": [
+    {
+      "name": "Digital 2D",
+      "id": 1
+    }
+  ],
+  "assets": [
+    {
+      "id": 29993811,
+      "title": "Factory design pattern",
+      "width": 1920,
+      "height": 1080,
+      "position": 0,
+      "small_image_url": "https://cdnb.artstation.com/p/assets/images/images/029/993/811/small/ningzhou-zeng-screenshot-2.jpg?1599254603",
+      "large_image_url": "https://cdnb.artstation.com/p/assets/images/images/029/993/811/large/ningzhou-zeng-screenshot-2.jpg?1599254603",
+      "signed_original_image_url": "https://cdnb.artstation.com/p/assets/images/images/029/993/811/original/ningzhou-zeng-screenshot-2.png?key=5d7a6282f3d9a9d4b675bd98db49f592\u0026expires_at=1599440033",
+      "viewport_constraint_type": "constrained",
+      "asset_type": "image",
+      "small_square_image_url": "https://cdnb.artstation.com/p/assets/images/images/029/993/811/small_square/ningzhou-zeng-screenshot-2.jpg?1599254603",
+      "crop_x": null,
+      "crop_y": null,
+      "crop_w": null,
+      "crop_h": null
+    }
+  ],
+  "project_software_items": [],
+  "id": 8144277,
+  "user_id": 2228426,
+  "title": "Dr. Zeng",
+  "description": "\u003cp\u003eA pic of factory design pattern\u003c/p\u003e",
+  "description_text": "A pic of factory design pattern",
+  "created_at": "2020-09-04T16:24:13.391-05:00",
+  "updated_at": "2020-09-04T16:24:50.118-05:00",
+  "permalink": "https://www.artstation.com/artwork/OoEl6w",
+  "published_at": null,
+  "adult_content": false,
+  "admin_adult_content": false,
+  "slug": "dr-zeng",
+  "suppressed": false,
+  "hash_id": "OoEl6w",
+  "visible": true,
+  "visibilities": [
+    "artstation",
+    "website"
+  ],
+  "published": false,
+  "cover_asset_id": 29993811,
+  "category_ids": []
+}

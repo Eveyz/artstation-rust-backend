@@ -7,7 +7,7 @@ use log::info;
 use serde_json::{Value, json};
 use chrono::{Utc};
 
-use crate::models::user::{User, AuthUser};
+use crate::models::user::{User, AuthUser, NewUser};
 use bcrypt::verify;
 
 static NAME: &str = "users";
@@ -76,6 +76,32 @@ pub async fn authenticate(auth_user: web::Json<AuthUser>) -> impl Responder {
   web::Json(v)
 }
 
+pub async fn create_user(user: web::Json<NewUser>) -> impl Responder {
+  let coll = collection(NAME);
+
+  let mut res = r#"
+    {
+      "status": 200,
+      "msg": "Added schedule successfully"
+    }
+  "#;
+
+  if user.password != user.password_conformation {
+    res = r#"
+      {
+        "status": 400,
+        "msg": "Password not matched"
+      }
+    "#;
+  } else {
+    res = User::create(user);
+  }
+
+  let v: Value = serde_json::from_str(res).unwrap();
+
+  web::Json(v)
+}
+
 pub async fn get_users() -> impl Responder {
   let coll = collection(NAME);
   let cursor = coll.find(Some(doc!{}), None).unwrap();
@@ -90,42 +116,6 @@ pub async fn get_user(params: web::Path<(String,)>) -> impl Responder {
   let user = coll.find_one(filter, None).unwrap();
   info!("find user time {}ms", now.elapsed().as_millis());
   web::Json(user)
-}
-
-pub async fn create_user(user: web::Json<User>) -> impl Responder {
-  let coll = collection(NAME);
-  info!("post request {:?}", user);
-  info!("post request {:?}", user.username);
-
-  let mut res = r#"
-    {
-      "status": 200,
-      "msg": "Added schedule successfully"
-    }
-  "#;
-
-  let doc = doc! {
-    "title": user.username.to_string(),
-    "category": user.status.to_string(),
-    "created_at": Utc::now(),
-    "updated_at": Utc::now(),
-  };
-  match coll.insert_one(doc, None) {
-    Ok(res) => info!("Added schedule successfully"),
-    Err(err) => {
-      info!("Failed to add schedule {}", err);
-      res = r#"
-        {
-          "status": 400,
-          "msg": "Failed to add schedule"
-        }
-      "#;
-    }
-  }
-
-  let v: Value = serde_json::from_str(res).unwrap();
-
-  web::Json(v)
 }
 
 pub async fn delete_user(params: web::Path<(String,)>) -> impl Responder {

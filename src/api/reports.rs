@@ -1,9 +1,11 @@
 use actix_web::{web, Responder};
-use futures::StreamExt;
 use bson::{doc, oid};
 use super::super::{collection};
+use log::info;
 
+use serde_json::{Value, json};
 use crate::models::report::ReportData;
+use crate::api::util::{caculate_report_amount, increase_student_balance, decrease_student_balacne, add_to_paycheck, remove_from_paycheck};
 
 fn aggregate_report(_id: &str) -> Option<bson::ordered::OrderedDocument> {
   let coll = collection("reports");
@@ -113,14 +115,46 @@ pub async fn get_report(params: web::Path<(String,)>) -> impl Responder {
 }
 
 
-pub async fn create_report(mut body: web::Payload) -> Result<actix_web::HttpResponse, actix_web::Error> {
+pub async fn create_report(report_data: web::Json<ReportData>) -> impl Responder {
+  
+  let coll = collection("reports_test");
 
-  let mut bytes = web::BytesMut::new();
-  while let Some(item) = body.next().await {
-    let item = item?;
-    println!("Chuck: {:?}", &item);
-    bytes.extend_from_slice(&item);
+  let mut response = bson::ordered::OrderedDocument::new();
+  response.insert("status", 200);
+  response.insert("msg", "success");
+
+  let (report_price, report_amount) = caculate_report_amount(&report_data.situation, &report_data.teacher_id, &report_data.course_id);
+
+  match coll.insert_one(report_data.to_bson_document(report_price, report_amount), None) {
+    Ok(res) => {
+      match res.inserted_id {
+        bson::Bson::String(report_id) => {
+
+          // created report successfully
+          let report_object_id = bson::oid::ObjectId::with_string(&report_id).unwrap();
+          
+          // decrease student balance
+          decrease_student_balacne(&report_data.student_id, &report_data.course_id, &report_data.situation);
+          
+          // add to teacher paycheck
+          add_to_paycheck(&report_data.teacher_id, &report_data.student_id, &report_data.course_id, &report_object_id, &report_data.course_date, &report_amount);
+
+          match aggregate_report(&report_id[..]) {
+            Some(report) => {
+
+              return web::Json(report);
+            },
+            None => {}
+          }
+        },
+        _ => {}
+      }
+    },
+    Err(err) => {
+      info!("err when creating report: {}", err);
+      response.insert("msg", "Fail to create report");
+    }
   }
 
-  Ok(actix_web::HttpResponse::Ok().finish())
+  web::Json(response)
 }

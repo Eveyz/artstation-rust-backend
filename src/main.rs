@@ -46,16 +46,27 @@ lazy_static! {
 }
 
 fn create_mongo_client() -> Client {
-    Client::with_uri_str("mongodb://localhost:27017").unwrap()
+    dotenv().ok();
+    let database_url = dotenv::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    Client::with_uri_str(&database_url).unwrap()
 }
 
 fn collection(coll_name: &str) -> Collection {
-    MONGO.database("lighters-rust").collection(coll_name)
+    MONGO.database("artstation").collection(coll_name)
 }
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+
+    let start = std::time::Instant::now();
+    let mut sum = 0;
+    for i in 0..100000000 {
+        sum += i;
+    }
+    let duration = start.elapsed();
+    info!("time elapsed {:?}", duration);
 
     // let HOST = dotenv::var("HOST").unwrap();
     // let PORT = dotenv::var("PORT").unwrap();
@@ -79,18 +90,16 @@ async fn main() -> std::io::Result<()> {
                     info!("Hi this is from start. You requested {:?}", req.headers());
 
                     let headers = req.headers();
-                    let auth = headers.get("Authorization").unwrap();
-                    info!("token: {}", auth.to_str().unwrap());
+                    if let Some(auth) = headers.get("Authorization") {
+                        info!("token: {}", auth.to_str().unwrap());
+                    };
 
                     let fut = srv.call(req);
-                    println!("1");
                     async {
-                        println!("2");
                         let mut res = fut.await?;
                     //     res.headers_mut().insert(
                     //             CONTENT_TYPE, HeaderValue::from_static("application/json"),
                     //     );
-                        println!("3");
                         Ok(res)
                     }
                 })
@@ -98,38 +107,9 @@ async fn main() -> std::io::Result<()> {
                 .route("/signup", web::post().to(api::users::create_user))
             )
             .service(
-                web::scope("/teachers")
+                web::scope("/artworks")
                 .route("", web::get().to(api::teachers::get_teachers))
                 .route("/{_id}", web::get().to(api::teachers::get_teacher))
-            )
-            .service(
-                web::scope("/students")
-                .route("", web::get().to(api::students::get_students))
-            )
-            .service(
-                web::scope("/reports")
-                .route("", web::get().to(api::reports::get_reports))
-                .route("", web::post().to(api::reports::create_report))
-                .route("/{_id}", web::get().to(api::reports::get_report))
-            )
-            .service(
-                web::scope("/transactions")
-                .route("", web::get().to(api::transactions::get_transactions))
-            )
-            .service(
-                web::scope("/tuitions")
-                .route("", web::get().to(api::tuitions::get_tuitions))
-            )
-            // .service(
-            //     web::scope("/levelsalaries")
-            //     .route("", web::get().to(greet))
-            // )
-            .service(
-                web::scope("/schedules")
-                .route("", web::get().to(api::schedules::get_schedules))
-                .route("/", web::post().to(api::schedules::create_schedule))
-                .route("/{_id}", web::get().to(api::schedules::get_schedule))
-                .route("/{_id}", web::delete().to(api::schedules::delete_schedule))
             )
     });
 
