@@ -1,6 +1,5 @@
 use serde::{Serialize, Deserialize};
-use bson::{doc, UtcDateTime};
-use bson::ordered::OrderedDocument;
+use bson::{doc, DateTime, document::Document};
 use std::cell::RefCell;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -16,8 +15,8 @@ pub struct StudentData {
 }
 
 impl StudentData {
-  pub fn to_bson_document(&self) -> OrderedDocument {
-    let mut doc = OrderedDocument::new();
+  pub fn to_bson_document(&self) -> Document {
+    let mut doc = Document::new();
     doc.insert("firstname", &self.firstname);
     doc.insert("lastname", &self.lastname);
     doc.insert("englishname", &self.englishname);
@@ -79,6 +78,6 @@ pub struct Student {
   pub comments: Option<String>,
   pub resume: Option<String>,
   pub rate: Option<i32>,
-  pub created_at: Option<UtcDateTime>,
-  pub updated_at: Option<UtcDateTime>,
+  pub created_at: Option<DateTime>,
+  pub updated_at: Option<DateTime>,
 }

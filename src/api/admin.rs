@@ -1,5 +1,5 @@
 use actix_web::{get, web, Responder};
-use bson::{doc, oid, UtcDateTime};
+use bson::{doc, oid, DateTime};
 use log::info;
 use super::super::{collection};
 use chrono::{Datelike, Utc};
@@ -19,7 +19,7 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
   "#;
 
   let coll = collection("teachers");
-  let count = coll.estimated_document_count(None).unwrap();
+  let count = coll.estimated_document_count(None).await.unwrap();
   let system_id = get_system_id(count);
   let current_year = Utc::now().date().year() / 100;
   let teacher_user_name = format!("T{}{}", current_year, system_id);
@@ -43,7 +43,7 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
 
   
   let coll_user = collection("user_test");
-  match coll_user.insert_one(user_doc, None) {
+  match coll_user.insert_one(user_doc, None).await {
       Ok(res) => {
 
           let mut teacher = teacher_data.to_bson_document();
@@ -57,7 +57,7 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
 
           let coll_teacher = collection("teacher_test");
 
-          match coll_teacher.insert_one(teacher, None) {
+          match coll_teacher.insert_one(teacher, None).await {
             Ok(res) => {
               info!("Created teacher succesfully");
               response = r#"
@@ -103,7 +103,7 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
   "#;
 
   let coll = collection("students");
-  let count = coll.estimated_document_count(None).unwrap();
+  let count = coll.estimated_document_count(None).await.unwrap();
   let system_id = get_system_id(count);
   let current_year = Utc::now().date().year() / 100;
   let student_user_name = format!("S{}{}", current_year, system_id);
@@ -127,7 +127,7 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
 
   
   let coll_user = collection("user_test");
-  match coll_user.insert_one(user_doc, None) {
+  match coll_user.insert_one(user_doc, None).await {
       Ok(res) => {
 
           let mut student = student_data.to_bson_document();
@@ -141,7 +141,7 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
 
           let coll_student = collection("student_test");
 
-          match coll_student.insert_one(student, None) {
+          match coll_student.insert_one(student, None).await {
             Ok(res) => {
               info!("Created student succesfully");
               response = r#"

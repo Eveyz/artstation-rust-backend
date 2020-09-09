@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use bson::{UtcDateTime};
+use bson::{DateTime};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Asset {
@@ -19,6 +19,6 @@ pub struct Asset {
     pub crop_y: i32,
     pub crop_w: i32,
     pub crop_h: i32,
-    pub created_at: UtcDateTime,
-    pub updated_at: UtcDateTime,
+    pub created_at: DateTime,
+    pub updated_at: DateTime,
 }

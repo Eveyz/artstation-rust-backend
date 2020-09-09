@@ -1,7 +1,6 @@
 extern crate chrono;
-use chrono::{Duration, Utc, DateTime};
 use serde::{Serialize, Deserialize};
-use bson::{doc, UtcDateTime};
+use bson::{doc, DateTime};
 use super::super::{collection};
 use log::info;
 use actix_web::{web};
@@ -20,6 +19,6 @@ pub struct Project {
   pub hash_id: String,
   pub tags: Vec<String>,
   pub assets: RefCell<Vec<Option<Asset>>>,
-  pub created_at: UtcDateTime,
-  pub updated_at: UtcDateTime,
+  pub created_at: DateTime,
+  pub updated_at: DateTime,
 }

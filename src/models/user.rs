@@ -1,9 +1,9 @@
 extern crate chrono;
 extern crate pwhash;
 
-use chrono::{Duration, Utc, DateTime};
+use chrono::{Utc};
 use serde::{Serialize, Deserialize};
-use bson::{doc, UtcDateTime};
+use bson::{doc, DateTime, document::Document};
 use super::super::{collection};
 use log::info;
 use jsonwebtoken::{encode, Header, EncodingKey};
@@ -39,10 +39,10 @@ pub struct NewUser {
 }
 
 impl NewUser {
-  pub fn unique(&self) -> bool {
+  pub async fn unique(&self) -> bool {
     let mut uniq = true;
     let coll = collection("users");
-    match coll.find_one(Some(doc! { "username": &self.username }), None) {
+    match coll.find_one(Some(doc! { "username": &self.username }), None).await {
       Ok(doc) => {
         if let Some(u) = doc {
           uniq = false
@@ -70,13 +70,13 @@ pub struct User {
   pub password: String,
   pub password_conformation: String,
   pub projects_ids: Option<Vec<bson::oid::ObjectId>>,
-  pub created_at: UtcDateTime,
-  pub updated_at: UtcDateTime,
+  pub created_at: DateTime,
+  pub updated_at: DateTime,
 }
 
 impl User {
 
-  pub fn create(user: web::Json<NewUser>) -> &'static str {
+  pub async fn create(user: web::Json<NewUser>) -> &'static str {
     let coll = collection("users");
 
     let hp = bcrypt::hash(&user.password).unwrap();
@@ -99,7 +99,7 @@ impl User {
       }
     "#;
 
-    if !user.unique() {
+    if !user.unique().await {
       res = r#"
         {
           "status": 200,
@@ -109,7 +109,7 @@ impl User {
       return res;
     }
   
-    match coll.insert_one(doc, None) {
+    match coll.insert_one(doc, None).await {
       Ok(inserted_id) => info!("Added user successfully"),
       Err(err) => {
         info!("Failed to add user {}", err);
@@ -139,14 +139,14 @@ impl User {
     token
   }
 
-  pub fn get_identity_data(&self) -> Option<bson::ordered::OrderedDocument> {
+  pub async fn get_identity_data(&self) -> Option<Document> {
     let mut identity_data = None;
     if self.identity == "teacher" {
       let coll = collection("teachers");
-      identity_data = coll.find_one(Some(doc! { "user_id": &self._id }), None).unwrap();
+      identity_data = coll.find_one(Some(doc! { "user_id": &self._id }), None).await.unwrap();
     } else if self.identity == "student" {
       let coll = collection("students");
-      identity_data = coll.find_one(Some(doc! { "user_id": &self._id }), None).unwrap();
+      identity_data = coll.find_one(Some(doc! { "user_id": &self._id }), None).await.unwrap();
     }
     identity_data
   }

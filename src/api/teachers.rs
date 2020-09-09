@@ -2,6 +2,7 @@ use actix_web::{get, web, Responder};
 use bson::{doc, oid};
 use log::info;
 use super::super::{collection};
+use futures::stream::{StreamExt};
 
 use crate::models::teacher::{Teacher};
 
@@ -9,8 +10,8 @@ static NAME: &str = "teachers";
 
 pub async fn get_teachers() -> impl Responder {
   let coll = collection(NAME);
-  let cursor = coll.find(Some(doc!{}), None).unwrap();
-  let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect();
+  let cursor = coll.find(Some(doc!{}), None).await.unwrap();
+  let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect().await;
   web::Json(docs)
 }
 
@@ -21,26 +22,26 @@ pub async fn get_teacher(params: web::Path<(String,)>) -> impl Responder {
   let mut stages: Vec<bson::Document> = vec![];
 
   let _match = doc! {
-    "$match" => {
+    "$match": {
       "_id": oid::ObjectId::with_string(&params.0).unwrap()
     }
   };
 
   let lookup = doc! {
-    "$lookup" => {
-      "from" => "users",
-      "localField" => "user_id",
-      "foreignField" => "_id",
-      "as" => "user"
+    "$lookup": {
+      "from": "users",
+      "localField": "user_id",
+      "foreignField": "_id",
+      "as": "user"
     }
   };
 
   let unwind = doc! {
-    "$unwind" => "$user"
+    "$unwind": "$user"
   };
 
   let project = doc! {
-    "$project" => {
+    "$project": {
       "certificates": 0,
       "user.temporaryPassword": 0,
       "user.password": 0,
@@ -53,13 +54,13 @@ pub async fn get_teacher(params: web::Path<(String,)>) -> impl Responder {
   stages.push(unwind);
   stages.push(project);
 
-  let cursor = coll.aggregate(stages, None).unwrap();
+  let mut cursor = coll.aggregate(stages, None).await.unwrap();
 
-  for result in cursor {
+  for result in cursor.next().await {
     if let Ok(document) = result {
       return web::Json(document)
     }
   }
 
-  web::Json(bson::ordered::OrderedDocument::new())
+  web::Json(bson::document::Document::new())
 }

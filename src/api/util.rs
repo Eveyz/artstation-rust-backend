@@ -1,7 +1,8 @@
-use bson::{doc, Bson::FloatingPoint, oid::ObjectId};
+use bson::{doc, Bson::Double, oid::ObjectId};
 use log::info;
 use super::super::{collection};
 use serde_json::{Value, json};
+use futures::stream::StreamExt;
 
 pub fn get_system_id(number: i64) -> String {
   let sum = number + 10;
@@ -32,7 +33,7 @@ pub fn get_student_credit(situation: &str) -> f64 {
   res
 }
 
-pub fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id: &ObjectId) -> (f64, f64) {
+pub async fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id: &ObjectId) -> (f64, f64) {
   let report_credit = get_report_credit(situation);
   let mut report_price = 0.0;
   
@@ -44,7 +45,7 @@ pub fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id:
   let mut flag = false;
 
   // get course_type and course_level
-  let course_res = coll_course.find_one(doc!{"_id": course_id}, None).unwrap();
+  let course_res = coll_course.find_one(doc!{"_id": course_id}, None).await.unwrap();
   let mut course_type: Value = json!(null);
   let mut course_level: Value = json!(null);
   match course_res {
@@ -56,7 +57,7 @@ pub fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id:
   }
 
   // get teacher level
-  let teacher_res = coll_teacher.find_one(doc!{"_id": teacher_id}, None).unwrap();
+  let teacher_res = coll_teacher.find_one(doc!{"_id": teacher_id}, None).await.unwrap();
   let mut level: Value = json!(null);
   match teacher_res {
     Some(teacher_doc) => {
@@ -66,16 +67,16 @@ pub fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id:
   }
 
   // check teacher rate fist
-  let cursor = coll_teacher_rate.find(doc!{"_id": teacher_id}, None).unwrap();
-  for result in cursor {
+  let mut cursor = coll_teacher_rate.find(doc!{"_id": teacher_id}, None).await.unwrap();
+  for result in cursor.next().await {
     if let Ok(item) = result {
       let ct: Value = item.get("course_type").unwrap().clone().into();
       let cl: Value = item.get("course_level").unwrap().clone().into();
 
       if course_type == ct && course_level == cl {
         match item.get("rate").unwrap() {
-            bson::Bson::FloatingPoint(rate) => {
-                report_price = *rate;      
+            Double(rate) => {
+              report_price = *rate;      
             },
             _ => {}
         }
@@ -90,10 +91,10 @@ pub fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id:
         "course_level": course_type.as_str().unwrap(), 
         "course_type": course_type.as_str().unwrap(),
         "level": level_str
-      }, None).unwrap() {
+      }, None).await.unwrap() {
       Some(ls_doc) => { 
         match ls_doc.get("rate").unwrap() {
-          bson::Bson::FloatingPoint(rate) => { report_price = *rate },
+          Double(rate) => { report_price = *rate },
           _ => {}
         }
       },
@@ -105,9 +106,9 @@ pub fn caculate_report_amount(situation: &str, teacher_id: &ObjectId, course_id:
   (report_price, report_price * report_credit)
 }
 
-pub fn decrease_student_balacne(student_id: &ObjectId, course_id: &ObjectId, situation: &str) {
-  let course = collection("courses").find_one(doc!{"_id": course_id}, None).unwrap();
-  let student = collection("students").find_one(doc!{"_id": student_id}, None).unwrap();
+pub async fn decrease_student_balacne(student_id: &ObjectId, course_id: &ObjectId, situation: &str) {
+  let course = collection("courses").find_one(doc!{"_id": course_id}, None).await.unwrap();
+  let student = collection("students").find_one(doc!{"_id": student_id}, None).await.unwrap();
   let mut course_rate = get_student_credit(situation);
   let mut tuition_amount = 0.0;
   
@@ -115,7 +116,7 @@ pub fn decrease_student_balacne(student_id: &ObjectId, course_id: &ObjectId, sit
     Some(doc) => {
       match doc.get("course_rate") {
         Some(res) => {
-          if let FloatingPoint(cr) = res {
+          if let Double(cr) = res {
             course_rate *= cr;
           }
         },
@@ -131,7 +132,7 @@ pub fn decrease_student_balacne(student_id: &ObjectId, course_id: &ObjectId, sit
     Some(doc) => {
       match doc.get("tuition_amount") {
         Some(res) => {
-          if let FloatingPoint(ta) = res {
+          if let Double(ta) = res {
             tuition_amount -= course_rate;
           }
         },
@@ -142,7 +143,7 @@ pub fn decrease_student_balacne(student_id: &ObjectId, course_id: &ObjectId, sit
       return;
     }
   }
-  match collection("students").find_one_and_update(doc!{"_id": student_id}, doc!{"tuition_amount": tuition_amount}, None) {
+  match collection("students").find_one_and_update(doc!{"_id": student_id}, doc!{"tuition_amount": tuition_amount}, None).await {
     Ok(res) => {
       info!("Decrease stduent tuition successfully");
     },
@@ -152,9 +153,9 @@ pub fn decrease_student_balacne(student_id: &ObjectId, course_id: &ObjectId, sit
   }
 }
 
-pub fn increase_student_balance(student_id: &ObjectId, course_id: &ObjectId, situation: &str) {
-  let course = collection("courses").find_one(doc!{"_id": course_id}, None).unwrap();
-  let student = collection("students").find_one(doc!{"_id": student_id}, None).unwrap();
+pub async fn increase_student_balance(student_id: &ObjectId, course_id: &ObjectId, situation: &str) {
+  let course = collection("courses").find_one(doc!{"_id": course_id}, None).await.unwrap();
+  let student = collection("students").find_one(doc!{"_id": student_id}, None).await.unwrap();
   let mut course_rate = get_student_credit(situation);
   let mut tuition_amount = 0.0;
   
@@ -162,7 +163,7 @@ pub fn increase_student_balance(student_id: &ObjectId, course_id: &ObjectId, sit
     Some(doc) => {
       match doc.get("course_rate") {
         Some(res) => {
-          if let FloatingPoint(cr) = res {
+          if let Double(cr) = res {
             course_rate *= cr;
           }
         },
@@ -178,7 +179,7 @@ pub fn increase_student_balance(student_id: &ObjectId, course_id: &ObjectId, sit
     Some(doc) => {
       match doc.get("tuition_amount") {
         Some(res) => {
-          if let FloatingPoint(ta) = res {
+          if let Double(ta) = res {
             tuition_amount += course_rate;
           }
         },
@@ -189,7 +190,7 @@ pub fn increase_student_balance(student_id: &ObjectId, course_id: &ObjectId, sit
       return;
     }
   }
-  match collection("students").find_one_and_update(doc!{"_id": student_id}, doc!{"tuition_amount": tuition_amount}, None) {
+  match collection("students").find_one_and_update(doc!{"_id": student_id}, doc!{"tuition_amount": tuition_amount}, None).await {
     Ok(res) => {
       info!("Increase stduent tuition successfully");
     },
@@ -199,14 +200,14 @@ pub fn increase_student_balance(student_id: &ObjectId, course_id: &ObjectId, sit
   }
 }
 
-pub fn add_to_paycheck(teacher_id: &ObjectId, student_id: &ObjectId, course_id: &ObjectId, report_id: &ObjectId, course_date: &str, amount: &f64) {
+pub async fn add_to_paycheck(teacher_id: &ObjectId, student_id: &ObjectId, course_id: &ObjectId, report_id: &ObjectId, course_date: &str, amount: &f64) {
   let month = &course_date[0..8];
   let coll = collection("paychecks");
   match coll.find_one_and_update(doc!{
     "teacher_id": teacher_id, 
     "month": month, 
     "paid": false
-  }, doc!{ "$inc": {"amount": amount} }, None) {
+  }, doc!{ "$inc": {"amount": amount} }, None).await {
     Ok(res) => {
       match res {
         Some(doc) => {
@@ -222,7 +223,7 @@ pub fn add_to_paycheck(teacher_id: &ObjectId, student_id: &ObjectId, course_id: 
             "reports": [teacher_id],
             "memo": "老师工资",
             "amount": 0
-          }, None) {
+          }, None).await {
             Ok(res) => { info!("Add report to paycheck successfully: {}", res.inserted_id); },
             Err(err) => { info!("Fail to create new paycheck: {}", err); }
           }
@@ -235,10 +236,10 @@ pub fn add_to_paycheck(teacher_id: &ObjectId, student_id: &ObjectId, course_id: 
   }
 }
 
-pub fn remove_from_paycheck(teacher_id: &ObjectId, student_id: &ObjectId, course_id: &ObjectId, report_id: &ObjectId, course_date: &str, amount: &f64) {
+pub async fn remove_from_paycheck(teacher_id: &ObjectId, student_id: &ObjectId, course_id: &ObjectId, report_id: &ObjectId, course_date: &str, amount: &f64) {
   let month = &course_date[0..8];
   let coll = collection("paychecks");
-  match coll.find_one_and_update(doc!{"teacher_id": teacher_id, "month": month, "paid": false}, doc!{ "$inc": {"amount": -amount}, "$pull": {"reports": report_id} }, None) {
+  match coll.find_one_and_update(doc!{"teacher_id": teacher_id, "month": month, "paid": false}, doc!{ "$inc": {"amount": -amount}, "$pull": {"reports": report_id} }, None).await {
     Ok(res) => {
       match res {
         Some(doc) => {

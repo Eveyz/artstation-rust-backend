@@ -6,6 +6,7 @@ use std::time::{Instant};
 use log::info;
 use serde_json::{Value, json};
 use chrono::{Utc};
+use futures::stream::StreamExt;
 
 use crate::models::user::{User, AuthUser, NewUser};
 use bcrypt::verify;
@@ -26,7 +27,7 @@ pub async fn authenticate(auth_user: web::Json<AuthUser>) -> impl Responder {
   }
 
   let coll = collection(NAME);
-  match coll.find_one(Some(doc!{ "username": &auth_user.username }), None) {
+  match coll.find_one(Some(doc!{ "username": &auth_user.username }), None).await {
     Ok(result) => {
       match result {
         Some(_user) => {
@@ -37,7 +38,7 @@ pub async fn authenticate(auth_user: web::Json<AuthUser>) -> impl Responder {
             info!("valid password");
             let response = json!({
               "token": user.create_token(),
-              "identity": user.get_identity_data()
+              "identity": user.get_identity_data().await
             });
             return web::Json(response);
           } else {
@@ -94,7 +95,7 @@ pub async fn create_user(user: web::Json<NewUser>) -> impl Responder {
       }
     "#;
   } else {
-    res = User::create(user);
+    res = User::create(user).await;
   }
 
   let v: Value = serde_json::from_str(res).unwrap();
@@ -104,8 +105,8 @@ pub async fn create_user(user: web::Json<NewUser>) -> impl Responder {
 
 pub async fn get_users() -> impl Responder {
   let coll = collection(NAME);
-  let cursor = coll.find(Some(doc!{}), None).unwrap();
-  let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect();
+  let cursor = coll.find(Some(doc!{}), None).await.unwrap();
+  let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect().await;
   web::Json(docs)
 }
 
@@ -113,7 +114,7 @@ pub async fn get_user(params: web::Path<(String,)>) -> impl Responder {
   let now = Instant::now();
   let coll = collection(NAME);
   let filter = Some(doc! { "_id": oid::ObjectId::with_string(&params.0).unwrap() });
-  let user = coll.find_one(filter, None).unwrap();
+  let user = coll.find_one(filter, None).await.unwrap();
   info!("find user time {}ms", now.elapsed().as_millis());
   web::Json(user)
 }

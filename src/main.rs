@@ -11,10 +11,10 @@ use actix_web::{web, App, HttpServer};
 use actix_web::http::{header::CONTENT_TYPE, HeaderValue};
 use actix_service::Service;
 use lazy_static::lazy_static;
-use mongodb::{Client, Collection, options::{FindOptions}};
+use mongodb::{Client, Collection, options::{FindOptions}, error};
 use bson::{doc};
 use dotenv::dotenv;
-// use futures::future::FutureExt;
+use futures::executor::block_on;
 
 mod common;
 mod api;
@@ -49,7 +49,8 @@ fn create_mongo_client() -> Client {
     dotenv().ok();
     let database_url = dotenv::var("DATABASE_URL")
         .expect("DATABASE_URL must be set");
-    Client::with_uri_str(&database_url).unwrap()
+    let res = block_on(Client::with_uri_str(&database_url));
+    res.unwrap()
 }
 
 fn collection(coll_name: &str) -> Collection {
@@ -59,14 +60,6 @@ fn collection(coll_name: &str) -> Collection {
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-
-    let start = std::time::Instant::now();
-    let mut sum = 0;
-    for i in 0..100000000 {
-        sum += i;
-    }
-    let duration = start.elapsed();
-    info!("time elapsed {:?}", duration);
 
     // let HOST = dotenv::var("HOST").unwrap();
     // let PORT = dotenv::var("PORT").unwrap();
