@@ -1,12 +1,10 @@
 use actix_web::{web, Responder};
-use bson::{doc, oid};
+use bson::{doc};
 use super::super::{collection};
-use std::string::String;
-use std::time::{Instant};
 use log::info;
 use serde_json::{Value, json};
-use chrono::{Utc};
-use futures::stream::StreamExt;
+// use chrono::{Utc};
+// use futures::stream::StreamExt;
 
 use crate::models::user::{User, AuthUser, NewUser};
 use bcrypt::verify;
@@ -78,9 +76,9 @@ pub async fn authenticate(auth_user: web::Json<AuthUser>) -> impl Responder {
 }
 
 pub async fn create_user(user: web::Json<NewUser>) -> impl Responder {
-  let coll = collection(NAME);
+  // let coll = collection(NAME);
 
-  let mut res = r#"
+  let mut _res = r#"
     {
       "status": 200,
       "msg": "Added schedule successfully"
@@ -88,37 +86,37 @@ pub async fn create_user(user: web::Json<NewUser>) -> impl Responder {
   "#;
 
   if user.password != user.password_conformation {
-    res = r#"
+    _res = r#"
       {
         "status": 400,
         "msg": "Password not matched"
       }
     "#;
   } else {
-    res = User::create(user).await;
+    _res = User::create(user).await;
   }
 
-  let v: Value = serde_json::from_str(res).unwrap();
+  let v: Value = serde_json::from_str(_res).unwrap();
 
   web::Json(v)
 }
 
-pub async fn get_users() -> impl Responder {
-  let coll = collection(NAME);
-  let cursor = coll.find(Some(doc!{}), None).await.unwrap();
-  let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect().await;
-  web::Json(docs)
-}
+// pub async fn get_users() -> impl Responder {
+//   let coll = collection(NAME);
+//   let cursor = coll.find(Some(doc!{}), None).await.unwrap();
+//   let docs: Vec<_> = cursor.map(|doc| doc.unwrap()).collect().await;
+//   web::Json(docs)
+// }
 
-pub async fn get_user(params: web::Path<(String,)>) -> impl Responder {
-  let now = Instant::now();
-  let coll = collection(NAME);
-  let filter = Some(doc! { "_id": oid::ObjectId::with_string(&params.0).unwrap() });
-  let user = coll.find_one(filter, None).await.unwrap();
-  info!("find user time {}ms", now.elapsed().as_millis());
-  web::Json(user)
-}
+// pub async fn get_user(params: web::Path<(String,)>) -> impl Responder {
+//   let now = Instant::now();
+//   let coll = collection(NAME);
+//   let filter = Some(doc! { "_id": oid::ObjectId::with_string(&params.0).unwrap() });
+//   let user = coll.find_one(filter, None).await.unwrap();
+//   info!("find user time {}ms", now.elapsed().as_millis());
+//   web::Json(user)
+// }
 
-pub async fn delete_user(params: web::Path<(String,)>) -> impl Responder {
-  web::Json(1)
-}
+// pub async fn delete_user(params: web::Path<(String,)>) -> impl Responder {
+//   web::Json(1)
+// }

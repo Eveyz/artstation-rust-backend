@@ -1,8 +1,6 @@
 use serde::{Serialize, Deserialize};
 use bson::{doc};
-use json::{object};
-use super::super::{collection};
-use log::info;
+// use super::super::{collection};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Admin {

@@ -11,7 +11,7 @@ use actix_web::{web, App, HttpServer};
 use actix_web::http::{header::CONTENT_TYPE, HeaderValue};
 use actix_service::Service;
 use lazy_static::lazy_static;
-use mongodb::{Client, Collection, options::{FindOptions}, error};
+use mongodb::{Client, Collection};
 use bson::{doc};
 use dotenv::dotenv;
 use futures::executor::block_on;
@@ -90,9 +90,9 @@ async fn main() -> std::io::Result<()> {
                     let fut = srv.call(req);
                     async {
                         let mut res = fut.await?;
-                    //     res.headers_mut().insert(
-                    //             CONTENT_TYPE, HeaderValue::from_static("application/json"),
-                    //     );
+                        res.headers_mut().insert(
+                            CONTENT_TYPE, HeaderValue::from_static("application/json"),
+                        );
                         Ok(res)
                     }
                 })
@@ -100,9 +100,9 @@ async fn main() -> std::io::Result<()> {
                 .route("/signup", web::post().to(api::users::create_user))
             )
             .service(
-                web::scope("/artworks")
-                .route("", web::get().to(api::teachers::get_teachers))
-                .route("/{_id}", web::get().to(api::teachers::get_teacher))
+                web::scope("/projects")
+                .route("", web::get().to(api::projects::get_projects))
+                .route("/{_id}", web::get().to(api::projects::get_project))
             )
     });
 

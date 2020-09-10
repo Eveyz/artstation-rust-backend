@@ -1,5 +1,5 @@
-use actix_web::{get, web, Responder};
-use bson::{doc, oid, DateTime};
+use actix_web::{web, Responder};
+use bson::{doc};
 use log::info;
 use super::super::{collection};
 use chrono::{Datelike, Utc};
@@ -11,7 +11,7 @@ use crate::api::util::get_system_id;
 
 pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Responder {
 
-  let mut response = r#"
+  let mut _response = r#"
     {
       "status": 200,
       "msg": "Success"
@@ -58,9 +58,9 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
           let coll_teacher = collection("teacher_test");
 
           match coll_teacher.insert_one(teacher, None).await {
-            Ok(res) => {
+            Ok(_res) => {
               info!("Created teacher succesfully");
-              response = r#"
+              _response = r#"
                 {
                   "status": 200,
                   "msg": "Created teacher succesfully"
@@ -69,7 +69,7 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
             },
             Err(err) => {
               info!("err when creating user: {}", err);
-              response = r#"
+              _response = r#"
                 {
                   "status": 200,
                   "msg": "Fail to create teacher"
@@ -80,7 +80,7 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
     },
     Err(err) => {
       info!("err when creating user: {}", err);
-      response = r#"
+      _response = r#"
         {
           "status": 200,
           "msg": "Fail to create user"
@@ -89,13 +89,13 @@ pub async fn create_teacher(teacher_data: web::Json<TeacherData>) -> impl Respon
     }
   }
 
-  let v: Value = serde_json::from_str(response).unwrap();
+  let v: Value = serde_json::from_str(_response).unwrap();
   web::Json(v)
 }
 
 pub async fn create_student(student_data: web::Json<StudentData>) -> impl Responder {
 
-  let mut response = r#"
+  let mut _response = r#"
     {
       "status": 200,
       "msg": "Success"
@@ -142,9 +142,9 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
           let coll_student = collection("student_test");
 
           match coll_student.insert_one(student, None).await {
-            Ok(res) => {
+            Ok(_res) => {
               info!("Created student succesfully");
-              response = r#"
+              _response = r#"
                 {
                   "status": 200,
                   "msg": "Created student succesfully"
@@ -153,7 +153,7 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
             },
             Err(err) => {
               info!("err when creating user: {}", err);
-              response = r#"
+              _response = r#"
                 {
                   "status": 200,
                   "msg": "Fail to create student"
@@ -164,7 +164,7 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
     },
     Err(err) => {
       info!("err when creating user: {}", err);
-      response = r#"
+      _response = r#"
         {
           "status": 200,
           "msg": "Fail to create user"
@@ -173,6 +173,6 @@ pub async fn create_student(student_data: web::Json<StudentData>) -> impl Respon
     }
   }
 
-  let v: Value = serde_json::from_str(response).unwrap();
+  let v: Value = serde_json::from_str(_response).unwrap();
   web::Json(v)
 }

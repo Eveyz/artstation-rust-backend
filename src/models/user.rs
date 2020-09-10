@@ -26,7 +26,7 @@ pub struct AuthUser {
 }
 
 impl AuthUser {
-  pub fn login(&self) {
+  pub fn _login(&self) {
 
   }
 }
@@ -44,11 +44,11 @@ impl NewUser {
     let coll = collection("users");
     match coll.find_one(Some(doc! { "username": &self.username }), None).await {
       Ok(doc) => {
-        if let Some(u) = doc {
+        if let Some(_u) = doc {
           uniq = false
         }
       },
-      Err(err) => {}
+      Err(_err) => {}
     }
     uniq
   }
@@ -110,7 +110,7 @@ impl User {
     }
   
     match coll.insert_one(doc, None).await {
-      Ok(inserted_id) => info!("Added user successfully"),
+      Ok(_inserted_id) => info!("Added user successfully"),
       Err(err) => {
         info!("Failed to add user {}", err);
         res = r#"

@@ -1,6 +1,6 @@
 pub mod reports;
 pub mod users;
-pub mod teachers;
+pub mod projects;
 pub mod students;
 pub mod transactions;
 pub mod schedules;
