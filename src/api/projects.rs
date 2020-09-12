@@ -15,14 +15,14 @@ pub async fn get_projects() -> impl Responder {
   web::Json(docs)
 }
 
-pub async fn get_project(params: web::Path<(String,)>) -> impl Responder {
+pub async fn get_project(web::Path((params,)): web::Path<(String,)>) -> impl Responder {
   let coll = collection(NAME);
   
   let mut stages: Vec<bson::Document> = vec![];
 
   let _match = doc! {
     "$match": {
-      "_id": oid::ObjectId::with_string(&params.0).unwrap()
+      "_id": oid::ObjectId::with_string(&params).unwrap()
     }
   };
 
